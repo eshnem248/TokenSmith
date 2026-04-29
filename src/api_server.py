@@ -400,8 +400,8 @@ async def chat_stream(request: ChatRequest):
             for i in topk_idxs[:max_chunks]:
                 source_text = sources[i]
                 pages = page_nums.get(i, [1]) or [1]
-
-                print(f"[DEBUG] i={i} pages={pages!r} page_nums_has_key={i in page_nums}", flush=True)
+                if isinstance(pages, int):
+                    pages = [pages]
 
                 for page in pages:
                     chunks_by_page.setdefault(page, []).append(chunks[i])

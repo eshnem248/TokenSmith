@@ -1,4 +1,6 @@
 embed_model: "models/Qwen3-Embedding-4B-Q5_K_M.gguf"
+system_prompt_mode: "tutor"
+model_path: "models/qwen2.5-3b-instruct-q8_0.gguf"
 embedding_model_context_window: 4096
 top_k: 10
 num_candidates: 50

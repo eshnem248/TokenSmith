@@ -7,6 +7,13 @@ Inner product on L2-normalized vectors equals cosine similarity,
 making the output directly compatible with a FAISS IndexFlatIP index.
 """
 
+import os
+# Prevent PyTorch from dispatching to MPS on Apple Silicon when the model is
+# explicitly kept on CPU. Without this, certain ops in CLIP can trigger MPS
+# initialization and cause a segfault when MPS and Metal GPU (llama.cpp) share
+# the same process.
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
 import numpy as np
 import torch
 from PIL import Image
@@ -21,11 +28,16 @@ _EMBEDDING_DIM = 768
 _model: CLIPModel = None
 _processor: CLIPProcessor = None
 
+# Disable MPS backend so all CLIP inference stays on CPU.
+# This avoids segfaults when llama.cpp's Metal backend is co-loaded in the
+# same process and both try to access the GPU simultaneously.
+torch.backends.mps.is_available = lambda: False  # type: ignore[assignment]
+
 
 def _load():
     global _model, _processor
     if _model is None:
-        _model = CLIPModel.from_pretrained(_MODEL_ID)
+        _model = CLIPModel.from_pretrained(_MODEL_ID).to("cpu")
         _processor = CLIPProcessor.from_pretrained(_MODEL_ID)
         _model.eval()
 
@@ -56,6 +68,7 @@ def embed_texts(texts: List[str], batch_size: int = 32) -> np.ndarray:
             truncation=True,
             max_length=77,
         )
+        inputs = {k: v.to("cpu") for k, v in inputs.items()}
         with torch.no_grad():
             out = _model.get_text_features(**inputs)
             emb = out.pooler_output if hasattr(out, "pooler_output") else out
@@ -87,6 +100,7 @@ def embed_images(
     for i in range(0, len(pil_images), batch_size):
         batch = pil_images[i : i + batch_size]
         inputs = _processor(images=batch, return_tensors="pt")
+        inputs = {k: v.to("cpu") for k, v in inputs.items()}
         with torch.no_grad():
             out = _model.get_image_features(**inputs)
             emb = out.pooler_output if hasattr(out, "pooler_output") else out

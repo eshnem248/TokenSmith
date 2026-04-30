@@ -75,3 +75,108 @@ benchmarks:
     keywords: ["lossy decomposition", "spurious tuples", "lossless join", "superkey", "natural join", "information loss", "functional dependency"]
     similarity_threshold: 0.70
     ideal_retrieved_chunks: [431, 430, 432, 433, 440]
+
+  - id: "two_phase_locking"
+    question: "How does two-phase locking ensure serializability?"
+    expected_answer: "Two-phase locking divides transaction execution into a growing phase, during which locks are acquired but never released, and a shrinking phase, during which locks are released but no new locks may be acquired. The lock point is the moment the last lock is acquired. This protocol guarantees conflict serializability because any two transactions whose lock points are ordered must execute in a conflict-equivalent serial order. Strict two-phase locking additionally holds all exclusive locks until commit, preventing cascading rollbacks."
+    keywords: ["growing phase", "shrinking phase", "lock point", "conflict serializability", "shared lock", "exclusive lock", "strict"]
+    similarity_threshold: 0.74
+    ideal_retrieved_chunks: []
+
+  - id: "er_model"
+    question: "What are entity sets and relationship sets in the ER model?"
+    expected_answer: "An entity set is a collection of entities of the same type that share the same attributes; a relationship set is a set of associations among two or more entity sets. Entities are distinguishable real-world objects; relationship sets capture how those entities are associated and carry mapping cardinalities (one-to-one, one-to-many, many-to-many) and participation constraints (total or partial). Weak entity sets have no primary key of their own and depend on a strong entity set via an identifying relationship."
+    keywords: ["entity set", "relationship set", "participation", "cardinality", "weak entity", "identifying relationship", "mapping"]
+    similarity_threshold: 0.70
+    ideal_retrieved_chunks: []
+
+  - id: "outer_joins"
+    question: "How do outer joins differ from inner joins and what types exist?"
+    expected_answer: "An inner join returns only tuples that satisfy the join condition; outer joins preserve non-matching tuples by padding missing attributes with null. A left outer join retains all tuples from the left relation, a right outer join retains all from the right relation, and a full outer join retains all tuples from both relations. Outer joins are useful when some tuples in one relation have no matching counterpart and their information must still appear in the result."
+    keywords: ["left outer join", "right outer join", "full outer join", "null", "inner join", "dangling tuple"]
+    similarity_threshold: 0.72
+    ideal_retrieved_chunks: []
+
+  - id: "sql_views"
+    question: "What is a SQL view and when can a view be updated?"
+    expected_answer: "A view is a virtual relation defined by a query expression that is not physically stored but computed on demand when referenced. Views simplify complex queries, restrict visible data for security, and provide logical data independence. A view is updatable only when the update can be unambiguously translated to the underlying base relations; views defined with aggregation, distinct, group by, or joins across multiple relations are generally not updatable because the mapping from view tuples to base tuples is ambiguous."
+    keywords: ["virtual relation", "view definition", "updatable", "materialized view", "base relation", "logical independence"]
+    similarity_threshold: 0.70
+    ideal_retrieved_chunks: []
+
+  - id: "deadlock_handling"
+    question: "How are deadlocks detected and resolved in database systems?"
+    expected_answer: "Deadlock detection uses a wait-for graph where a directed edge from Ti to Tj means Ti is waiting for a lock held by Tj; a cycle indicates deadlock. Resolution requires selecting a victim transaction to roll back, minimizing rollback cost. Deadlock prevention schemes avoid cycles entirely: the wait-die scheme allows an older transaction to wait for a younger one but rolls back a younger transaction waiting for an older one; the wound-wait scheme preempts the younger transaction instead. Timeouts offer a simpler but less precise alternative."
+    keywords: ["wait-for graph", "cycle", "victim", "rollback", "wait-die", "wound-wait", "prevention", "timeout"]
+    similarity_threshold: 0.72
+    ideal_retrieved_chunks: []
+
+  - id: "bcnf_normalization"
+    question: "What is Boyce-Codd Normal Form and how does BCNF decomposition work?"
+    expected_answer: "Boyce-Codd Normal Form requires that for every non-trivial functional dependency X → Y in a relation schema, X must be a superkey. BCNF eliminates all redundancy arising from functional dependencies. Decomposition finds a BCNF violation X → Y and splits the relation into two: one containing X ∪ Y and one containing the original attributes minus the attributes in Y that are not in X. The process repeats until all resulting schemas satisfy BCNF. BCNF decomposition guarantees lossless join but may not preserve all functional dependencies."
+    keywords: ["superkey", "Boyce-Codd", "functional dependency", "decomposition", "lossless", "dependency preservation", "redundancy"]
+    similarity_threshold: 0.72
+    ideal_retrieved_chunks: []
+
+  - id: "log_based_recovery"
+    question: "How does write-ahead logging support crash recovery?"
+    expected_answer: "Write-ahead logging requires that a log record describing each change be written to stable storage before the corresponding data page is written to disk, and that all log records for a transaction be flushed before the transaction commits. On recovery after a crash, the system performs an analysis pass to identify active and committed transactions, a redo pass to reapply all logged updates from the last checkpoint forward, and an undo pass to roll back all incomplete transactions by applying compensation log records. Checkpoints periodically flush dirty pages and log a consistent state to bound recovery time."
+    keywords: ["write-ahead log", "redo", "undo", "checkpoint", "stable storage", "compensation log record", "crash recovery"]
+    similarity_threshold: 0.74
+    ideal_retrieved_chunks: []
+
+  - id: "relational_algebra"
+    question: "What are the fundamental operations of relational algebra?"
+    expected_answer: "The six fundamental operations are: select (σ), which filters tuples satisfying a predicate; project (π), which retains only specified columns and eliminates duplicates; union (∪), which combines tuples from two union-compatible relations; set difference (−), which returns tuples in one relation but not another; Cartesian product (×), which pairs every tuple from two relations; and rename (ρ), which renames a relation or its attributes. Join is a derived operation defined as a Cartesian product followed by select. These operations are closed: the result of every operation is itself a relation."
+    keywords: ["select", "project", "union", "set difference", "Cartesian product", "rename", "closed", "derived operation"]
+    similarity_threshold: 0.70
+    ideal_retrieved_chunks: []
+
+  - id: "sql_subqueries"
+    question: "How do correlated subqueries and the EXISTS clause work in SQL?"
+    expected_answer: "A correlated subquery references an attribute from the outer query, causing it to be re-evaluated once for each tuple of the outer relation. The EXISTS construct returns true when the result of its subquery is non-empty and false otherwise; NOT EXISTS returns true when the subquery returns no tuples. Correlated subqueries with EXISTS are commonly used to test set membership or express division. The UNIQUE construct tests whether a subquery result has any duplicate tuples."
+    keywords: ["correlated subquery", "EXISTS", "NOT EXISTS", "subquery", "outer query", "UNIQUE", "set membership"]
+    similarity_threshold: 0.70
+    ideal_retrieved_chunks: []
+
+  - id: "buffer_management"
+    question: "How does the buffer manager decide which pages to evict from memory?"
+    expected_answer: "The buffer manager maintains a pool of fixed-size frames in main memory; when a page is requested and no free frame is available, it must evict an existing page using a replacement policy. Least recently used (LRU) evicts the frame accessed furthest in the past, exploiting temporal locality. However, LRU performs poorly on sequential scans where the most recently used page will not be needed again soon; the most recently used (MRU) strategy or toss-immediate policy is preferable for repeated sequential scans. Pinned pages cannot be evicted while in use."
+    keywords: ["buffer pool", "LRU", "MRU", "replacement policy", "pinned", "frame", "temporal locality", "sequential scan"]
+    similarity_threshold: 0.70
+    ideal_retrieved_chunks: []
+
+  - id: "timestamp_ordering"
+    question: "How does timestamp-based concurrency control work?"
+    expected_answer: "Each transaction is assigned a unique timestamp when it starts. For a read by Ti on data item Q, the operation proceeds only if Q's write timestamp is ≤ Ti's timestamp; otherwise Ti is rolled back. For a write by Ti on Q, the operation proceeds only if both Q's read timestamp and write timestamp are ≤ Ti's timestamp; otherwise Ti is rolled back. The Thomas write rule allows a write to be ignored rather than causing a rollback when a later timestamp has already written Q. Rolled-back transactions restart with a new, later timestamp."
+    keywords: ["timestamp", "read timestamp", "write timestamp", "Thomas write rule", "rollback", "conflict serializability"]
+    similarity_threshold: 0.70
+    ideal_retrieved_chunks: []
+
+  - id: "join_algorithms"
+    question: "How do nested-loop join and hash join differ in performance?"
+    expected_answer: "Nested-loop join iterates over every pair of tuples from two relations, requiring O(n×m) I/Os in the worst case; block nested-loop join reduces this by loading chunks of the outer relation to minimize buffer misses. Index nested-loop join further reduces cost by using an index on the inner relation to look up matching tuples directly. Hash join partitions both relations on the join attribute using the same hash function so only matching-partition pairs must be compared, achieving linear I/O cost when each partition fits in memory. Hash join is generally preferred for large unsorted relations without an available index."
+    keywords: ["nested-loop", "block nested-loop", "index nested-loop", "hash join", "partition", "probe phase", "build phase"]
+    similarity_threshold: 0.72
+    ideal_retrieved_chunks: []
+
+  - id: "snapshot_isolation"
+    question: "What is snapshot isolation and how does it differ from serializability?"
+    expected_answer: "Snapshot isolation gives each transaction a consistent snapshot of the database as it existed at the transaction's start time, so reads never block writers and writers never block readers. It prevents dirty reads, non-repeatable reads, and phantom reads. However, it permits write skew anomalies where two concurrent transactions each read an overlapping set of data items and write disjoint sets such that the combined result could not arise from any serial execution. Serializable snapshot isolation adds predicate-based conflict detection to eliminate write skew, achieving true serializability with snapshot isolation's read performance."
+    keywords: ["snapshot", "write skew", "MVCC", "multiversion", "serializable snapshot isolation", "read-only transaction"]
+    similarity_threshold: 0.72
+    ideal_retrieved_chunks: []
+
+  - id: "query_optimization"
+    question: "How does a cost-based query optimizer choose an execution plan?"
+    expected_answer: "A cost-based query optimizer generates a space of equivalent relational algebra expressions by applying equivalence rules such as pushing selections down and reordering joins, estimates the cost of each candidate plan using catalog statistics including relation sizes and attribute value distributions, and selects the plan with lowest estimated I/O and CPU cost. Key decisions include join ordering, choice between nested-loop, merge, and hash join algorithms, and whether to use available indexes. Dynamic programming is used to efficiently find the optimal left-deep join tree without enumerating all possible plans."
+    keywords: ["equivalence rules", "cost estimation", "join order", "statistics", "dynamic programming", "left-deep tree", "catalog"]
+    similarity_threshold: 0.72
+    ideal_retrieved_chunks: []
+
+  - id: "hash_indexing"
+    question: "How does static hashing work and what problem does extendible hashing solve?"
+    expected_answer: "Static hashing maps a search key to one of a fixed number of buckets using a hash function; records with the same hash value go to the same bucket, with overflow chaining when a bucket fills. As the database grows, overflow chains lengthen and performance degrades, or too much space is wasted if buckets are over-allocated. Extendible hashing solves this by using a directory of pointers to buckets and doubling the directory size when a bucket overflows, splitting only the overflowing bucket rather than reorganizing the entire file, so the structure adapts dynamically to data volume."
+    keywords: ["bucket", "hash function", "overflow", "extendible hashing", "directory", "bucket splitting", "dynamic"]
+    similarity_threshold: 0.70
+    ideal_retrieved_chunks: []

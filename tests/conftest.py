@@ -177,6 +177,7 @@ def config(pytestconfig):
         # Query Enhancement (HyDE)
         "use_hyde": cfg.get("use_hyde", False),
         "hyde_max_tokens": cfg.get("hyde_max_tokens", 300),
+        "use_multimodal": cfg.get("use_multimodal", False),
     }
 
     # Handle enable/disable chunks

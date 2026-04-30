@@ -15,8 +15,19 @@ chunk_overlap: 300
 use_hyde: false
 hyde_max_tokens: 300
 use_indexed_chunks: false
+# --- Retrieval mode toggle ---
+# Multimodal CLIP (current):
+#   use_multimodal: true
+#   metrics: ["semantic", "nli", "keyword"]
+#   rerank_top_k: 7
+# Text-only:
+#   use_multimodal: false
+#   metrics: ["all"]          # or omit this line entirely
+#   rerank_top_k: 5
+use_multimodal: true
+metrics: ["semantic", "nli", "keyword"]
 rerank_mode: "cross_encoder"
-rerank_top_k: 5
+rerank_top_k: 7
 use_double_prompt: false
 enable_history: true
 max_history_turns: 3

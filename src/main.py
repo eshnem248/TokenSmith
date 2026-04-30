@@ -30,6 +30,18 @@ from src.ranking.reranker import rerank
 
 ANSWER_NOT_FOUND = "I'm sorry, but I don't have enough information to answer that question."
 
+_mm_index_cache = None
+
+def _get_mm_index():
+    global _mm_index_cache
+    if _mm_index_cache is None:
+        from src.multimodal.unified_index import UnifiedFAISSIndex
+        import pathlib
+        p = pathlib.Path("data/multimodal/unified_index")
+        if p.with_suffix(".faiss").exists():
+            _mm_index_cache = UnifiedFAISSIndex.load(p)
+    return _mm_index_cache
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Welcome to TokenSmith!")
     parser.add_argument("mode", choices=["index", "chat"], help="operation mode")
@@ -130,6 +142,28 @@ def get_answer(
         ranked_chunks = []
     elif cfg.use_indexed_chunks:
         ranked_chunks, topk_idxs = use_indexed_chunks(question, chunks)
+    elif cfg.use_multimodal:
+        from src.multimodal.retriever import MultiModalRetriever
+        mm_index = _get_mm_index()
+        if mm_index is not None:
+            mm_retriever = MultiModalRetriever(mm_index, top_k=cfg.num_candidates)
+            mm_results = mm_retriever.retrieve(question, modality_filter="text")
+            if is_test_mode:
+                chunks_info = [
+                    {
+                        "rank": i + 1,
+                        "chunk_id": r.entry.idx,
+                        "content": r.entry.text or "",
+                        "faiss_score": r.score,
+                        "faiss_rank": i + 1,
+                        "bm25_score": 0,
+                        "bm25_rank": 0,
+                        "index_score": 0,
+                        "index_rank": 0,
+                    }
+                    for i, r in enumerate(mm_results)
+                ]
+            ranked_chunks = [r.entry.text for r in mm_results if r.entry.text]
     else:
         retrieval_query = question
         # print(f"Retrieval query: {retrieval_query}")
@@ -163,21 +197,21 @@ def get_answer(
             faiss_scores = raw_scores.get("faiss", {})
             bm25_scores = raw_scores.get("bm25", {})
             index_scores = raw_scores.get("index_keywords", {})
-            
+
             faiss_ranked = sorted(faiss_scores.keys(), key=lambda i: faiss_scores[i], reverse=True)
             bm25_ranked = sorted(bm25_scores.keys(), key=lambda i: bm25_scores[i], reverse=True)
             index_ranked = sorted(index_scores.keys(), key=lambda i: index_scores[i], reverse=True)
-            
+
             faiss_ranks = {idx: rank + 1 for rank, idx in enumerate(faiss_ranked)}
             bm25_ranks = {idx: rank + 1 for rank, idx in enumerate(bm25_ranked)}
             index_ranks = {idx: rank + 1 for rank, idx in enumerate(index_ranked)}
-            
+
             chunks_info = []
-            for rank, idx in enumerate(topk_idxs, 1):
+            for rank, idx in enumerate(ordered, 1):
                 chunks_info.append({
                     "rank": rank,
                     "chunk_id": idx,
-                    "content": chunks[idx],
+                    "content": chunks[idx] if rank <= cfg.top_k else "",
                     "faiss_score": faiss_scores.get(idx, 0),
                     "faiss_rank": faiss_ranks.get(idx, 0),
                     "bm25_score": bm25_scores.get(idx, 0),
@@ -185,11 +219,12 @@ def get_answer(
                     "index_score": index_scores.get(idx, 0),
                     "index_rank": index_ranks.get(idx, 0),
                 })
+            # In test mode, rerank over the full candidate pool so the generator
+            # sees the best chunks across all retrieved candidates, not just top_k.
+            ranked_chunks = [chunks[i] for i in ordered]
 
-        # Step 3: Final re-ranking
-        ranked_chunks = rerank(question, ranked_chunks, mode=cfg.rerank_mode, top_n=cfg.rerank_top_k)
-        # print("Reranked Chunks", type(ranked_chunks), len(ranked_chunks), type(ranked_chunks[0]) if ranked_chunks else "No chunks")
-        # print("Example reranked chunk content:", ranked_chunks[0] if ranked_chunks else "No chunks after reranking")
+    # Step 3: Final re-ranking (runs for all retrieval paths)
+    ranked_chunks = rerank(question, ranked_chunks, mode=cfg.rerank_mode, top_n=cfg.rerank_top_k)
 
     if not ranked_chunks and not cfg.disable_chunks:
         if console:

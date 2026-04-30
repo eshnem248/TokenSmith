@@ -206,6 +206,7 @@ def get_tokensmith_answer(question, config, golden_chunks=None):
         use_hyde=config.get("use_hyde", False),
         hyde_max_tokens=config.get("hyde_max_tokens", 300),
         use_indexed_chunks=config.get("use_indexed_chunks", False),
+        use_multimodal=config.get("use_multimodal", False),
         extracted_index_path=config.get("extracted_index_path", "data/extracted_index.json"),
         page_to_chunk_map_path=config.get("page_to_chunk_map_path", "index/sections/textbook_index_page_to_chunk_map.json"),
     )

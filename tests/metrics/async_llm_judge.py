@@ -23,26 +23,30 @@ _initialized = False
 _rate_limit_lock = threading.Lock()
 _last_request_time = 0.0
 _min_request_interval = 1.0  # Minimum 1 second between requests
+_init_error: Optional[str] = None
 
 
 class AsyncLLMJudgeMetric(MetricBase):
     """
     Async LLM Judge that spawns threads to grade answers in background.
     Results accumulate in shared dict and are included in final scoring.
+    Skipped automatically when GEMINI_API_KEY is not set.
     """
-    
+
     def __init__(self, log_dir: Optional[Path] = None):
         if log_dir is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             log_dir = Path("logs") / timestamp
-        
+
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.results_file = self.log_dir / "async_llm_results.json"
-        
-        # Initialize client once
+
         if not _initialized:
             _lazy_init()
+
+    def is_available(self) -> bool:
+        return _initialized and _init_error is None
     
     @property
     def name(self) -> str:

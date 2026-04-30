@@ -19,7 +19,7 @@ class RAGConfig:
 
     # retrieval + ranking
     top_k: int = 10
-    num_candidates: int = 60
+    num_candidates: int = 150
     embed_model: str = "models/Qwen3-Embedding-4B-Q5_K_M.gguf"
     embedding_model_context_window: int = 4096
     ensemble_method: str = "rrf"
@@ -52,6 +52,7 @@ class RAGConfig:
 
     # index parameters
     use_indexed_chunks: bool = False
+    use_multimodal: bool = False
     extracted_index_path: os.PathLike = "data/extracted_index.json"
     page_to_chunk_map_path: os.PathLike = "index/sections/textbook_index_page_to_chunk_map.json"
 
